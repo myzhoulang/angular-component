@@ -55,7 +55,7 @@
             name: '广东爱车小屋实业发展股份有限公司',
             id: 13
         },
- ];
+    ];
     var sugTlp = '<div class="sug">' +
         '<div class="sug-input">' +
         '<input type="search" ng-model="sugSelect.name" placeholder="输入关键字搜索" />' +
@@ -70,12 +70,13 @@
             restrict: 'AE',
             template: sugTlp,
             scope: {
-                source: '=',
+                source: '@',
                 placeholder: '@',
                 selectItem: '=',
                 sugSelect: '=',
                 onSearch: '&',
                 onSelect: '&',
+                onInput:'&',
                 onBlur: '&',
                 item: '='
             },
@@ -85,20 +86,18 @@
                 var $sugList = $sug.find('.sug-lists');
                 var $ul = $sugList.find('ul');
                 var $aLi = $sugList.find('li');
-                console.log($scope.sugSelect)
-                    // $scope.searchTxt = $scope.sugSelect.name;
+                var source = $scope.source;
+       
+                try {
+                    source = angular.fromJson(source);
+                } catch(e) {
+                    // statements
+                    console.log(e);
+                }
 
-                //                $scope.$watch('sugSelect', function (oldVal, newVal) {
-                //                    //debugger
-                //                    if (angular.isObject(newVal)) {
-                //                        if (angular.isString(newVal.name)) {
-                //                            $scope.searchTxt = newVal.name
-                //                        }
-                //                    }
-                //                });
 
-                if (angular.isArray($scope.source)) {
-                    $scope.suglists = $scope.sugSelectsource;
+                if (angular.isArray(source)) {
+                    $scope.suglists = source;
                 }
 
                 angular.extend($scope, {
@@ -128,10 +127,16 @@
                         });
                     },
 
+                    input: function(search){
+                        $scope.onInput({
+                            search: search
+                        })
+                    },
+
                     search: function (keyword) {
                         $scope.iNow = 0;
-                        if (angular.isArray($scope.source)) {
-                            return $filter('filter')($scope.source, {
+                        if (angular.isArray(source)) {
+                            return $filter('filter')(source, {
                                 name: keyword
                             });
                         } else {
@@ -151,23 +156,28 @@
                 var $aLi2 = $aLi;
                 var timer = null;
                 var mouseoverTimer = null;
-                console.log(scope.sugSelect)
+                var blurTimer = null;
                 scope.iNow = 0;
 
+                function blur(){
+                    scope.blur($input.val());
+                    scope.close();
+                }
+
                 $input.on({
-                    blur: function () {
-                        var $this = $(this);
-                        scope.close();
-                        scope.blur($this.val());
-                    },
+                    blur: blur,
                     input: function (e) {
                         $timeout.cancel(timer);
                         var $this = $(this);
+                        scope.input({
+                            selectItem: scope.selectItem,
+                            keyword : $this.val() 
+                        });
                         timer = $timeout(function () {
                             scope.suglists = scope.search($this.val());
                             scope.iNow = 0;
                             scope.open();
-                        }, 500);
+                        }, 300);
                     },
                     keydown: function (e) {
                         $aLi = $sugList.find('li');
@@ -186,11 +196,12 @@
                             if ($item.length > 0) {
                                 $input.val($aLi.eq(scope.iNow).text());
                                 scope.close();
+                                var select = angular.copy(scope.suglists[scope.iNow]);
                                 scope.select({
                                     selectItem: scope.selectItem,
-                                    sugSelect: scope.suglists[scope.iNow]
+                                    sugSelect: select
                                 });
-                                scope.sugSelect = scope.suglists[scope.iNow];
+                                scope.sugSelect = select;
                             } else {
                                 $input.blur();
                             }
@@ -204,9 +215,11 @@
                 });
 
                 $sug.delegate('li', 'click', function () {
+                    console.log('click')
+                    
                     $aLi = $sugList.find('li');
                     scope.iNow = $(this).index();
-                    var itemData = scope.suglists[scope.iNow];
+                    var itemData = angular.copy(scope.suglists[scope.iNow]);
                     scope.select({
                         selectItem: scope.selectItem,
                         sugSelect: itemData
@@ -221,7 +234,14 @@
                         $aLi = $sugList.find('li');
                         var index = $this.index();
                         scope.iNow = index;
-                    }, 30)
+                    }, 30);
+                }).on({
+                    mouseover: function(e){
+                        $input.off('blur');
+                    },
+                    mouseout: function(e){
+                        $input.on('blur', blur)
+                    }
                 });
 
                 function move(dir) {
@@ -282,8 +302,12 @@
                     selectItem.addr = selectItem.addrs[0];
                 }
             },
+            input: function(search){
+                console.log(search)
+            },
             InuputBlur: function (seach) {
                 var selectItem = seach.selectItem;
+
                 if (!angular.isNumber(selectItem.id)) {
                     console.log('根据关键字查询id');
                 }
