@@ -2,218 +2,62 @@
 <html ng-app="app">
 
 <head>
-    <title>
-        <%=title %>
-    </title>
-    <link rel="stylesheet" href="/stylesheets/bootstrap.min.css" />
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-    <style>
-        input {
-            border: none;
-            padding-left: 12px;
-        }
-        
-        ul {
-            padding: 0;
-            margin: 0;
-        }
-        
-        li {
-            list-style: none;
-        }
-        
-        
-    </style>
+  <title>
+    <%=title %>
+  </title>
+  <link rel="stylesheet" href="/stylesheets/bootstrap.min.css" />
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  <style>
+    input {
+      border: none;
+      padding-left: 12px;
+    }
+  </style>
 </head>
 
 <body>
 
-    <div class="sug">
-        <div class="sug-input">
-            <input type="search" placeholder="输入关键字搜索" />
-        </div>
-        <div class="sug-lists">
-            <ul>
-                <li class="item active">自营商品</li>
-                <li class="item">测试供应商</li>
-                <li class="item">杭州尚达汽配有限公司</li>
-                <li class="item">杭州万品汽配城联沃汽车配件商行</li>
-                <li class="item">宁波市海曙顺风汽配商行</li>
-                <li class="item">杭州东楠贸易有限公司</li>
-                <li class="item">宁波博德联合汽配贸易有限公司</li>
-                <li class="item">杭州申令贸易有限公司</li>
-                <li class="item">浙江景厚贸易有限公司</li>
-                <li class="item">宁波北仑宁虹机电有限公司</li>
-                <li class="item">杭州轮速汽配有限公司</li>
-                <li class="item">广东爱车小屋实业发展股份有限公司</li>
-                <li class="item">杭州协通贸易有限公司</li>
-            </ul>
-        </div>
+  <div ng-controller="SugCtrl">
+    <div class="continer">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th width="10%">序</th>
+            <th width="35%">供应商</th>
+            <th width="35%">供应商地址</th>
+            <th>入库数量</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="sup in suppliers">
+            <td class="text-center">{{ $index+1 }}</td>
+            <td>
+              <p toggle-siblings>{{ sup.supplier.name }}</p>
+              <sug class="hidden" source="{{ suglists }}" select-item="sup" sug-select='sup.supplier' on-blur="sugInuputBlur(search)" on-close="close(select)" on-select="selected(select)" on-input="input(search)"></sug>
+            </td>
+            <td>
+<!--              <p toggle-siblings>{{ sup.addr.name }}</p>-->
+              <div class="input">
+                <select ng-options="addr.name for addr in sup.addrs" ng-model="sup.addr"></select>
+              </div>
+            </td>
+            <td>
+              <p toggle-siblings>{{sup.num}}</p>
+              <div class="input hidden">
+                <input type="number" ng-model="sup.num" ng-blur="blur()">
+              </div>
+
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
+  </div>
 
-    <script src="/javascripts/vendor/jquery.min.js"></script>
-    <script src="/javascripts/vendor/angular.min.js"></script>
-    <script src="/javascripts/vendor/angular-route.min.js"></script>
-    <script src="/javascripts/app.js"></script>
-
-    <script>
-        $(function () {
-            var datas = [
-                {
-                    name: '自营商品',
-                    id: 1
-                },
-                {
-                    name: '测试供应商',
-                    id: 2
-                },
-                {
-                    name: '杭州尚达汽配有限公司',
-                    id: 3
-                },
-                {
-                    name: '杭州万品汽配城联沃汽车配件商行',
-                    id: 4
-                },
-                {
-                    name: '宁波市海曙顺风汽配商行',
-                    id: 5
-                },
-                {
-                    name: '宁波市海曙顺风汽配商行',
-                    id: 6
-                },
-                {
-                    name: '杭州东楠贸易有限公司',
-                    id: 7
-                },
-                {
-                    name: '宁波博德联合汽配贸易有限公司',
-                    id: 8
-                },
-                {
-                    name: '杭州申令贸易有限公司',
-                    id: 9
-                },
-                {
-                    name: '浙江景厚贸易有限公司',
-                    id: 10
-                },
-                {
-                    name: '宁波北仑宁虹机电有限公司',
-                    id: 11
-                },
-                {
-                    name: '杭州轮速汽配有限公司',
-                    id: 12
-                },
-                {
-                    name: '广东爱车小屋实业发展股份有限公司',
-                    id: 13
-                },
- ];
-            var $sug = $('.sug');
-            var $input = $sug.find('input[type="search"]');
-            var $sugList = $sug.find('.sug-lists');
-            var $ul = $sugList.find('ul');
-            var $aLi = $sugList.find('li');
-            var $aLi2 = $aLi;
-            var iNow = 0;
-            var timer = null;
-
-            $input.on({
-                blur: function () {
-                    close();
-                },
-                input: function () {
-                    clearTimeout(timer);
-                    var $this = $(this);
-                    timer = setTimeout(function () {
-                        var data = search($this.val());
-                        var aLis = '';
-                        data.forEach(function (item) {
-                            aLis += '<li class="item">' + (item) + '</li>';
-                        });
-                        $ul.html(aLis);
-                    }, 500);
-                    open();
-                },
-                keydown: function (e) {
-                    var keyCode = e.keyCode;
-                    switch (keyCode) {
-                    case 38:
-                        move(-1);
-                        break;
-
-                    case 40:
-                        move(1);
-                        break;
-
-                    case 13:
-                        $input.val($($aLi[iNow]).text());
-                        close();
-                        break;
-
-                    default:
-
-                        break;
-                    }
-                }
-            });
-
-            function open() {
-                $sugList.show();
-            }
-
-            function close() {
-                setTimeout(function () {
-                    $sugList.hide();
-                }, 30)
-
-            }
-
-            function search(keyword) {
-                return datas.filter(function (item) {
-                    return item.indexOf(keyword) !== -1;
-                });
-            }
-
-            $aLi.on({
-                click: function () {
-                    //                    debugger
-                    var val = $(this).text();
-                    console.log(val)
-                    $input.val(val);
-                    close();
-                },
-                mouseover: function () {
-                    var index = $(this).index();
-                    iNow = index;
-                    $aLi.removeClass('active');
-                    $($aLi[iNow]).addClass('active');
-                }
-            })
-
-            function move(dir) {
-                $aLi.removeClass('active');
-                if (dir === 1) {
-                    if (iNow === $aLi.length - 1) {
-                        iNow = 0;
-                    } else {
-                        iNow++;
-                    }
-                } else if (dir === -1) {
-                    if (iNow === 0) {
-                        iNow = $aLi.length - 1
-                    } else {
-                        iNow--;
-                    }
-
-                }
-                $($aLi[iNow]).addClass('active');
-            }
-        });
-    </script>
+  <script src="/javascripts/vendor/jquery.min.js"></script>
+  <script src="/javascripts/vendor/angular.min.js"></script>
+  <script src="/javascripts/vendor/angular-route.min.js"></script>
+  <script src="/javascripts/app.js"></script>
 </body>
 
 </html>
