@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>dialogs demo</title>
+	<script src="./javascript/angular.js"></script>
+	<script src="./javascript/dialogs.js"></script>
+	<style>
+		
+		.dialog-bg {
+		    position: fixed;
+		    top: 0;
+		    left: 0;
+		    right: 0;
+		    bottom: 0;
+		    background: rgba(0, 0, 0, .7);
+		    z-index: 9;
+		}
+
+		.dialog-box {
+		    position: absolute;
+		    top: 50%;
+		    left: 50%;
+		    transform: translate(-50%, -50%);
+		    background: #fff;
+		}
+
+		.dialog-header {
+		    border-bottom: 1px solid #ccc;
+		    position: relative;
+		    padding: 0 12px;
+		}
+
+		.dialog-header .dialog-title {
+		    color: #666;
+		    font-size: 16px;
+		}
+
+		.dialog-icon-close {
+		    position: absolute;
+		    right: 10px;
+		    top: 10px;
+		    font-size: 24px;
+		    font-weight: bold;
+		}
+
+		.dialog-content {
+		    padding: 12px;
+		    line-height: 24px;
+		    font-size: 14px;
+		    min-width: 200px;
+		}
+
+		.dialog-footer {
+		    padding: 6px;
+		    text-align: right;
+		}
+
+		.dialog-footer .btn {
+		    margin-left: 8px;
+		}
+	</style>
+</head>
+<body ng-app="app">
+	
+	<div ng-controller="ctrl">
+		
+		<button ng-click="dialogs()">dialog 测试</button>
+	</div>
+	
+	<script>
+		var app = angular.module('app', ['dialogs']);
+		
+		app.controller('ctrl', function($scope, dialogs){
+			angular.extend($scope, {
+				dialogs: function(){
+					dialogs.modal({
+            controller: 'dialogsCtrl',
+            method: 'submit',
+            isBackdropClickClose: false,
+            isShowCloseIcon: false,
+            template: '<form>status: {{ status }}<button type="button" ng-click="ok()">Login</button></form>'
+          }).then(function(obj) {
+            var scope = obj.scope;
+            var data = obj.data;
+            scope.status = data.msg;
+            return scope;
+          }, function(obj) {
+            var scope = obj.scope;
+            var err = obj.err;
+            scope.status = err.errMsg;
+          }).then(function(obj) {
+            obj.close();
+            return dialogs.alert({
+               template: '<p>执行完毕，关闭弹窗</p>'
+            });
+          }).then(function(obj) {
+             obj.close();
+          });
+				}
+			})
+		});
+
+		app.controller('dialogsCtrl', function($scope, $q){
+			$scope.status = "初始状态";
+	    $scope.submit = function() {
+        $scope.status = "执行中";
+        var defer = $q.defer();
+
+        // 模拟一些请求
+        setTimeout(function() {
+            // defer.reject({errMsg: "错误的参数"})
+            defer.resolve({ msg: "success" })
+        }, 3000);
+
+        return defer.promise;
+	    }
+		});
+
+	</script>
+</body>
+</html>
